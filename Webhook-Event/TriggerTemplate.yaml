@@ -1,0 +1,32 @@
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerTemplate
+metadata:
+  name: github-trigger
+  namespace: ocp-pipelines
+spec:
+  params:
+    - name: gitrevision
+    - name: gitrepositoryurl
+  resourcetemplates:
+    - apiVersion: tekton.dev/v1beta1
+      kind: PipelineRun
+      metadata:
+        generateName: activities-build-run-
+      spec:
+        serviceAccountName: tekton-pipeline-sa
+        pipelineRef:
+          name: activities-build-pipeline
+        params:
+          - name: git-url
+            value: $(tt.params.gitrepositoryurl)
+          - name: git-revision
+            value: $(tt.params.gitrevision)
+          - name: image-repo
+            value: "docker.io/komlan2019/activities"
+        workspaces:
+          - name: shared-workspace
+            persistentVolumeClaim:
+              claimName: pipeline-pvc
+        podTemplate:
+          securityContext:
+            fsGroup: 65535
